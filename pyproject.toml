@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=78.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wagtail-visual-editor"
+version = "0.1.0"
+description = "A point-and-click visual editor for Wagtail pages"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+  "Django>=5.2",
+  "Wagtail>=7.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/kalobtaulien/wagtail-visual-editor"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["visual_editor*"]
+
+[tool.setuptools.package-data]
+"visual_editor" = ["templates/**/*", "static/**/*", "*.md"]

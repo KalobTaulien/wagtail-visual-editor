@@ -1,0 +1,153 @@
+{% extends "wagtailadmin/admin_base.html" %}
+{% load static wagtailadmin_tags %}
+
+{% block titletag %}Visual editor: {{ page.get_admin_display_title }}{% endblock %}
+{% block bodyclass %}ve-body{% endblock %}
+
+{% block extra_css %}
+    {{ media.css }}
+    <link rel="stylesheet" href="{% static 'visual_editor/editor.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+    {{ media.js }}
+    {# "Link to a page…" in the canvas's rich text toolbar uses Wagtail's page chooser. #}
+    <script src="{% versioned_static 'wagtailadmin/js/page-chooser-modal.js' %}"></script>
+    {{ ve_config|json_script:"ve-config" }}
+    <script src="{% static 'visual_editor/editor.js' %}" defer></script>
+{% endblock %}
+
+{% block furniture %}
+    <div class="ve-app" data-device="desktop">
+        <header class="ve-topbar">
+            <a class="ve-icon-button" href="{{ ve_config.urls.explore }}" title="Back to the page tree" aria-label="Back to the page tree">
+                {% icon name="arrow-left" %}
+            </a>
+            <div class="ve-topbar__title">
+                <strong data-ve-page-title>{{ ve_config.title }}</strong>
+                <span class="ve-chip" data-ve-status-chip></span>
+                <span class="ve-topbar__type">{{ ve_config.pageType }}</span>
+            </div>
+
+            <div class="ve-segmented" role="group" aria-label="Preview width">
+                <button type="button" data-ve-device="desktop" aria-pressed="true" title="Desktop (1280px wide, scaled to fit)">{% icon name="desktop" %}</button>
+                <button type="button" data-ve-device="tablet" aria-pressed="false" title="Tablet">{% icon name="tablet-alt" %}</button>
+                <button type="button" data-ve-device="mobile" aria-pressed="false" title="Mobile">{% icon name="mobile-alt" %}</button>
+            </div>
+
+            <div class="ve-topbar__actions">
+                <button type="button" class="ve-icon-button" data-ve-undo title="Undo (⌘Z)" aria-label="Undo" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+                <button type="button" class="ve-icon-button" data-ve-redo title="Redo (⇧⌘Z)" aria-label="Redo" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m15 14 5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+                <span class="ve-save-state" data-ve-save-state>No changes</span>
+                <a class="ve-link" href="{{ ve_config.urls.classicEdit }}">Classic editor</a>
+                <a class="ve-link" data-ve-live-link href="#" target="_blank" rel="noopener" hidden>View live</a>
+                <button type="button" class="ve-button" data-ve-save>Save draft</button>
+                {% if ve_config.canPublish %}
+                    <button type="button" class="ve-button ve-button--primary" data-ve-publish>Publish</button>
+                {% endif %}
+            </div>
+        </header>
+
+        <aside class="ve-outline" aria-label="Page structure">
+            <div class="ve-panel-heading">Structure</div>
+            <div data-ve-outline></div>
+        </aside>
+
+        <main class="ve-canvas" aria-label="Page preview">
+            <div class="ve-canvas__viewport">
+                <iframe class="ve-frame is-front" title="Page preview"></iframe>
+                <iframe class="ve-frame" title="Page preview (loading)" aria-hidden="true" tabindex="-1"></iframe>
+                <div class="ve-canvas__loading" data-ve-loading>Rendering preview…</div>
+            </div>
+        </main>
+
+        <aside class="ve-inspector" aria-label="Inspector">
+            <div class="ve-tabs" role="tablist">
+                <button type="button" role="tab" data-ve-tab="block" aria-selected="true">Block</button>
+                <button type="button" role="tab" data-ve-tab="page" aria-selected="false">Page settings</button>
+            </div>
+
+            <section class="ve-tab-panel" data-ve-panel="block">
+                <div class="ve-problems" data-ve-problems hidden></div>
+                <div class="ve-empty-state" data-ve-block-empty>
+                    <p><strong>Click anything on the page.</strong></p>
+                    <p>Text with a dashed outline can be edited right where it is. Click a section to change its options here, move it, or add a new one.</p>
+                    <p>Parts of the page that don’t highlight are part of the template and can’t be edited.</p>
+                </div>
+                <div class="ve-block-inspector" data-ve-block-inspector hidden>
+                    <div class="ve-block-inspector__header">
+                        <span class="ve-block-inspector__icon" data-ve-block-icon></span>
+                        <div>
+                            <div class="ve-block-inspector__label" data-ve-block-label></div>
+                            <div class="ve-block-inspector__stream" data-ve-block-stream></div>
+                        </div>
+                    </div>
+                    <div class="ve-block-actions">
+                        <button type="button" class="ve-button ve-button--small" data-ve-action="up" title="Move up">{% icon name="arrow-up" %}</button>
+                        <button type="button" class="ve-button ve-button--small" data-ve-action="down" title="Move down">{% icon name="arrow-down" %}</button>
+                        <button type="button" class="ve-button ve-button--small ve-spacing-toggle" data-ve-spacing-toggle aria-expanded="false" aria-controls="ve-spacing-panel" title="Spacing settings" hidden>{% icon name="cog" %}<span class="ve-spacing-toggle__dot" data-ve-spacing-dot hidden></span></button>
+                        <button type="button" class="ve-button ve-button--small" data-ve-action="duplicate" title="Duplicate">{% icon name="copy" %} Duplicate</button>
+                        <button type="button" class="ve-button ve-button--small" data-ve-action="add" title="Add a block below">{% icon name="plus" %} Add below</button>
+                        <button type="button" class="ve-button ve-button--small ve-button--danger" data-ve-action="delete" title="Delete">{% icon name="bin" %}</button>
+                    </div>
+                    <section class="ve-spacing" id="ve-spacing-panel" data-ve-spacing hidden aria-label="Spacing">
+                        <div class="ve-spacing__header">
+                            <span class="ve-spacing__title">Spacing</span>
+                            <button type="button" class="ve-spacing__reset" data-ve-spacing-reset title="Clear all desktop and mobile spacing, back to the block’s usual spacing">Reset</button>
+                            <div class="ve-segmented ve-segmented--small" role="group" aria-label="Screen size">
+                                <button type="button" data-ve-spacing-tab="desktop" aria-pressed="true">{% icon name="desktop" %} Desktop</button>
+                                <button type="button" data-ve-spacing-tab="mobile" aria-pressed="false">{% icon name="mobile-alt" %} Mobile</button>
+                            </div>
+                        </div>
+                        <div class="ve-spacing__box ve-spacing__box--margin">
+                            <span class="ve-spacing__box-label">Margin</span>
+                            <div class="ve-spacing__edge" data-ve-spacing-edge="margin_top"></div>
+                            <div class="ve-spacing__box ve-spacing__box--padding">
+                                <span class="ve-spacing__box-label">Padding</span>
+                                <div class="ve-spacing__edge" data-ve-spacing-edge="padding_top"></div>
+                                <div class="ve-spacing__content" data-ve-spacing-block-label>Block</div>
+                                <div class="ve-spacing__edge" data-ve-spacing-edge="padding_bottom"></div>
+                            </div>
+                            <div class="ve-spacing__edge" data-ve-spacing-edge="margin_bottom"></div>
+                        </div>
+                        <p class="ve-spacing__hint" data-ve-spacing-hint></p>
+                    </section>
+                    <ul class="ve-block-errors" data-ve-block-errors hidden></ul>
+                    <form class="ve-block-form" data-ve-block-form novalidate></form>
+                </div>
+                <div class="ve-block-inspector" data-ve-snippet-inspector hidden>
+                    <div class="ve-block-inspector__header">
+                        <span class="ve-block-inspector__icon">{% icon name="snippet" %}</span>
+                        <div>
+                            <div class="ve-block-inspector__label" data-ve-snippet-title></div>
+                            <div class="ve-block-inspector__stream" data-ve-snippet-label></div>
+                        </div>
+                    </div>
+                    <div class="ve-snippet-notice" data-ve-snippet-notice></div>
+                    <div class="ve-block-actions">
+                        <button type="button" class="ve-button ve-button--small" data-ve-snippet-owner></button>
+                        <a class="ve-button ve-button--small" data-ve-snippet-edit-link target="_blank" rel="noopener">Open in Snippets ↗</a>
+                    </div>
+                    <ul class="ve-block-errors" data-ve-snippet-errors hidden></ul>
+                    <form class="ve-page-form" data-ve-snippet-form novalidate></form>
+                </div>
+            </section>
+
+            <section class="ve-tab-panel" data-ve-panel="page" hidden>
+                <ul class="ve-block-errors" data-ve-page-errors hidden></ul>
+                <form class="ve-page-form" data-ve-page-form novalidate>
+                    <p class="ve-muted">Loading…</p>
+                </form>
+            </section>
+        </aside>
+
+        <div class="ve-popover" data-ve-add-menu hidden>
+            <div class="ve-popover__header">
+                <input type="search" placeholder="Search blocks…" data-ve-add-search aria-label="Search blocks">
+            </div>
+            <div class="ve-popover__body" data-ve-add-list></div>
+        </div>
+
+        <div class="ve-toasts" aria-live="polite" data-ve-toasts></div>
+    </div>
+{% endblock %}

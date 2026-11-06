@@ -1,0 +1,934 @@
+/* Visual editor shell. Everything is prefixed `ve-` to stay clear of Wagtail's admin styles. */
+
+.ve-body {
+    overflow: hidden;
+}
+
+.ve-app {
+    --ve-border: #e2e8f0;
+    --ve-muted: #64748b;
+    --ve-text: #0f172a;
+    --ve-accent: #2563eb;
+    --ve-accent-soft: #eff6ff;
+    --ve-danger: #dc2626;
+    --ve-canvas-bg: #e9edf3;
+    --ve-topbar-height: 56px;
+
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr) 400px;
+    grid-template-rows: var(--ve-topbar-height) minmax(0, 1fr);
+    grid-template-areas:
+        "topbar topbar topbar"
+        "outline canvas inspector";
+    background: #fff;
+    color: var(--ve-text);
+    font-size: 14px;
+    z-index: 10;
+}
+
+.ve-app .icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ---- Top bar ---------------------------------------------------------- */
+
+.ve-topbar {
+    grid-area: topbar;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--ve-border);
+    background: #fff;
+}
+
+.ve-topbar__title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.ve-topbar__title strong {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ve-topbar__type {
+    color: var(--ve-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.ve-topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ve-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #f1f5f9;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.ve-chip--live {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ve-chip--draft {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.ve-save-state {
+    color: var(--ve-muted);
+    font-size: 12px;
+    min-width: 110px;
+    text-align: right;
+}
+
+.ve-save-state--dirty {
+    color: #b45309;
+}
+
+.ve-link {
+    color: var(--ve-muted);
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.ve-link:hover {
+    color: var(--ve-accent);
+}
+
+.ve-segmented {
+    display: inline-flex;
+    border: 1px solid var(--ve-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.ve-segmented button {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    background: #fff;
+    border: 0;
+    color: var(--ve-muted);
+    cursor: pointer;
+}
+
+.ve-segmented button + button {
+    border-left: 1px solid var(--ve-border);
+}
+
+.ve-segmented button[aria-pressed="true"] {
+    background: var(--ve-accent-soft);
+    color: var(--ve-accent);
+}
+
+/* ---- Buttons ----------------------------------------------------------- */
+
+.ve-button,
+.ve-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--ve-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--ve-text);
+    font: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.ve-icon-button {
+    width: 34px;
+    padding: 0;
+    border-color: transparent;
+    color: var(--ve-muted);
+}
+
+.ve-button:hover,
+.ve-icon-button:hover {
+    background: #f8fafc;
+    color: var(--ve-text);
+}
+
+.ve-button:disabled,
+.ve-icon-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.ve-button--primary {
+    background: var(--ve-accent);
+    border-color: var(--ve-accent);
+    color: #fff;
+}
+
+.ve-button--primary:hover {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.ve-button--danger {
+    color: var(--ve-danger);
+}
+
+.ve-button--small {
+    height: 28px;
+    padding: 0 7px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ve-button--small .icon {
+    width: 13px;
+    height: 13px;
+}
+
+/* ---- Outline (left) ---------------------------------------------------- */
+
+.ve-outline {
+    grid-area: outline;
+    border-right: 1px solid var(--ve-border);
+    overflow-y: auto;
+    background: #fbfcfe;
+}
+
+.ve-panel-heading {
+    padding: 14px 16px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ve-muted);
+}
+
+.ve-stream {
+    padding: 4px 8px 16px;
+}
+
+.ve-stream__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+}
+
+.ve-stream__label {
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.ve-stream__add {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    background: none;
+    color: var(--ve-accent);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ve-stream__add:hover {
+    background: var(--ve-accent-soft);
+}
+
+.ve-stream__add:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.ve-block-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ve-block-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.ve-block-item:hover {
+    background: #f1f5f9;
+}
+
+.ve-block-item.is-selected {
+    background: var(--ve-accent-soft);
+    color: var(--ve-accent);
+}
+
+.ve-block-item.is-dragging {
+    opacity: 0.4;
+}
+
+.ve-block-item.drop-before::before,
+.ve-block-item.drop-after::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    height: 2px;
+    background: var(--ve-accent);
+}
+
+.ve-block-item.drop-before::before {
+    top: -1px;
+}
+
+.ve-block-item.drop-after::after {
+    bottom: -1px;
+}
+
+.ve-block-item__text {
+    min-width: 0;
+    flex: 1;
+    line-height: 1.25;
+}
+
+.ve-block-item__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.ve-block-item__snippet {
+    display: block;
+    font-size: 11px;
+    color: var(--ve-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ve-block-item__error {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ve-danger);
+    flex-shrink: 0;
+}
+
+.ve-muted {
+    color: var(--ve-muted);
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+/* ---- Canvas ------------------------------------------------------------ */
+
+.ve-canvas {
+    position: relative;
+    grid-area: canvas;
+    background: var(--ve-canvas-bg);
+    overflow: hidden;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.ve-canvas__viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    transition: width 0.2s ease;
+}
+
+.ve-app[data-device="tablet"] .ve-canvas,
+.ve-app[data-device="mobile"] .ve-canvas {
+    padding: 16px;
+}
+
+.ve-app[data-device="tablet"] .ve-canvas__viewport {
+    width: 820px;
+    max-width: 100%;
+    box-shadow: 0 4px 24px rgb(15 23 42 / 0.15);
+}
+
+.ve-app[data-device="mobile"] .ve-canvas__viewport {
+    width: 390px;
+    max-width: 100%;
+    box-shadow: 0 4px 24px rgb(15 23 42 / 0.15);
+}
+
+.ve-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    visibility: hidden;
+}
+
+.ve-frame.is-front {
+    visibility: visible;
+}
+
+.ve-canvas__loading {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgb(15 23 42 / 0.8);
+    color: #fff;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.ve-canvas__loading.is-visible {
+    opacity: 1;
+}
+
+/* ---- Inspector (right) --------------------------------------------------- */
+
+.ve-inspector {
+    grid-area: inspector;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-left: 1px solid var(--ve-border);
+    background: #fff;
+}
+
+.ve-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--ve-border);
+    padding: 0 8px;
+    flex-shrink: 0;
+}
+
+.ve-tabs button {
+    padding: 12px 12px 10px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--ve-muted);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ve-tabs button[aria-selected="true"] {
+    color: var(--ve-text);
+    border-bottom-color: var(--ve-accent);
+}
+
+.ve-tab-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.ve-empty-state {
+    color: var(--ve-muted);
+    line-height: 1.5;
+    padding: 8px 4px;
+}
+
+.ve-empty-state p {
+    margin: 0 0 10px;
+}
+
+.ve-empty-state strong {
+    color: var(--ve-text);
+}
+
+.ve-block-inspector__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.ve-block-inspector__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--ve-accent-soft);
+    color: var(--ve-accent);
+}
+
+.ve-block-inspector__icon .icon {
+    width: 18px;
+    height: 18px;
+}
+
+.ve-block-inspector__label {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.ve-block-inspector__stream {
+    color: var(--ve-muted);
+    font-size: 12px;
+}
+
+.ve-block-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--ve-border);
+}
+
+.ve-block-errors {
+    margin: 0 0 14px;
+    padding: 10px 12px 10px 28px;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 13px;
+}
+
+.ve-problems {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 13px;
+}
+
+.ve-problems button {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ve-problems button:hover {
+    background: #fee2e2;
+}
+
+/* Tighten Wagtail's block forms for the narrower sidebar. */
+.ve-block-form .w-field__wrapper,
+.ve-page-form .w-field__wrapper {
+    margin-bottom: 16px;
+}
+
+.ve-block-form .c-sf-container {
+    margin-top: 0;
+}
+
+.ve-block-form .w-panel__header,
+.ve-block-form .c-sf-block__header {
+    padding-inline-start: 0;
+}
+
+.ve-field-group + .ve-field-group {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ve-border);
+}
+
+.ve-field-group__heading {
+    margin: 0 0 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ve-muted);
+}
+
+.ve-field.is-flash {
+    animation: ve-flash 1.2s ease;
+    border-radius: 6px;
+}
+
+@keyframes ve-flash {
+    0%,
+    40% {
+        box-shadow: 0 0 0 4px rgb(37 99 235 / 0.25);
+    }
+    100% {
+        box-shadow: 0 0 0 4px rgb(37 99 235 / 0);
+    }
+}
+
+.ve-field__errors {
+    margin: -8px 0 12px;
+    padding-left: 18px;
+    color: var(--ve-danger);
+    font-size: 12px;
+}
+
+.ve-help {
+    margin-top: 20px;
+    color: var(--ve-muted);
+    font-size: 12px;
+}
+
+/* ---- Add block popover ------------------------------------------------- */
+
+.ve-popover {
+    position: fixed;
+    z-index: 100;
+    width: 320px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ve-border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgb(15 23 42 / 0.2);
+}
+
+.ve-popover__header {
+    padding: 10px;
+    border-bottom: 1px solid var(--ve-border);
+}
+
+.ve-popover__header input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 36px;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: 1px solid var(--ve-border);
+    border-radius: 6px;
+    font: inherit;
+}
+
+.ve-popover__body {
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.ve-popover__group {
+    padding: 8px 8px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ve-muted);
+}
+
+.ve-popover__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--ve-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ve-popover__item:hover,
+.ve-popover__item:focus-visible {
+    background: var(--ve-accent-soft);
+    color: var(--ve-accent);
+    outline: none;
+}
+
+.ve-popover__item:disabled {
+    opacity: 0.4;
+    cursor: default;
+    background: none;
+    color: var(--ve-text);
+}
+
+.ve-popover__item small {
+    display: block;
+    color: var(--ve-muted);
+    font-size: 11px;
+}
+
+/* ---- Toasts ------------------------------------------------------------ */
+
+.ve-toasts {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    z-index: 200;
+    pointer-events: none;
+}
+
+.ve-toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #fff;
+    font-size: 13px;
+    box-shadow: 0 8px 24px rgb(15 23 42 / 0.25);
+    pointer-events: auto;
+    max-width: 560px;
+}
+
+.ve-toast--error {
+    background: #991b1b;
+}
+
+.ve-toast--success {
+    background: #166534;
+}
+
+.ve-toast button {
+    border: 0;
+    background: none;
+    color: #93c5fd;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+    .ve-app {
+        grid-template-columns: 0 minmax(0, 1fr) 360px;
+    }
+
+    .ve-outline {
+        display: none;
+    }
+}
+
+/* ---- Snippet inspector --------------------------------------------------- */
+
+.ve-snippet-notice {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* ---- Spacing panel (blocks with a SpacingBlock) -------------------------- */
+
+.ve-spacing {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--ve-border);
+}
+
+.ve-spacing__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.ve-spacing__title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ve-muted);
+}
+
+.ve-spacing__reset {
+    margin-left: auto;
+    margin-right: 8px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--ve-accent);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ve-spacing__reset:hover {
+    background: var(--ve-accent-soft);
+}
+
+.ve-spacing__reset:disabled {
+    color: var(--ve-muted);
+    opacity: 0.5;
+    cursor: default;
+    background: none;
+}
+
+.ve-segmented--small button {
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ve-segmented--small .icon {
+    width: 12px;
+    height: 12px;
+}
+
+.ve-spacing__box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px dashed;
+    border-radius: 6px;
+}
+
+.ve-spacing__box--margin {
+    border-color: #fdba74;
+    background: #fff7ed;
+}
+
+.ve-spacing__box--padding {
+    align-self: stretch;
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.ve-spacing__box-label {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9a3412;
+}
+
+.ve-spacing__box--padding > .ve-spacing__box-label {
+    color: #166534;
+}
+
+.ve-spacing__content {
+    align-self: stretch;
+    padding: 8px;
+    border-radius: 4px;
+    background: #fff;
+    border: 1px solid var(--ve-border);
+    color: var(--ve-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.ve-spacing__edge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Compact, overriding the admin's full-size form controls. */
+.ve-app .ve-spacing__edge input {
+    width: 110px;
+    height: 28px;
+    min-height: 0;
+    padding: 0 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    text-align: center;
+    color: var(--ve-text);
+}
+
+.ve-app .ve-spacing__edge input.is-set {
+    border-color: var(--ve-accent);
+    color: var(--ve-accent);
+    font-weight: 600;
+}
+
+.ve-app .ve-spacing__edge input.is-invalid {
+    border-color: var(--ve-danger);
+    color: var(--ve-danger);
+}
+
+.ve-spacing__now {
+    font-size: 10px;
+    color: var(--ve-muted);
+}
+
+.ve-spacing__hint {
+    margin: 8px 0 0;
+    color: var(--ve-muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ve-spacing-toggle {
+    position: relative;
+}
+
+.ve-spacing-toggle[aria-expanded="true"] {
+    background: var(--ve-accent-soft);
+    border-color: var(--ve-accent);
+    color: var(--ve-accent);
+}
+
+/* Shows the block has custom spacing while the settings are closed. */
+.ve-spacing-toggle__dot {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ve-accent);
+}

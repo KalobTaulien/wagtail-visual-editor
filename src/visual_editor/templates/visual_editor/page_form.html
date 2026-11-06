@@ -1,0 +1,17 @@
+{% load wagtailadmin_tags %}
+{% for heading, fields in groups %}
+    {% if fields %}
+        <section class="ve-field-group">
+            <h3 class="ve-field-group__heading">{{ heading }}</h3>
+            {% for field in fields %}
+                <div class="ve-field" data-field-name="{{ field.name }}">
+                    {% formattedfield field %}
+                    <ul class="ve-field__errors" hidden></ul>
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+{% endfor %}
+{% if unsupported %}
+    <p class="ve-help">Not editable here yet — use the classic editor for: {{ unsupported|join:", " }}.</p>
+{% endif %}
