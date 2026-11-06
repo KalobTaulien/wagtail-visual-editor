@@ -1,0 +1,201 @@
+/*
+ * Admin-only styling for section_editor.js's structured form (CustomSectionBlock's
+ * sidebar/page-editor UI). Nothing here reaches the front end - this is loaded via
+ * SectionEditorWidget.media, which only ever appears in the admin.
+ */
+
+.ve-section-editor__ui {
+    font-size: 0.875rem;
+}
+
+.ve-sec-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.ve-sec-raw-help {
+    opacity: 0.75;
+    margin: 0 0 0.5rem;
+}
+
+.ve-sec-root {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+.ve-sec-node {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    background: rgba(0, 0, 0, 0.015);
+}
+
+.ve-sec-node--section {
+    /* Nested sections get a slightly stronger left edge, so depth is visible without indentation alone. */
+    border-left: 3px solid rgba(37, 99, 235, 0.4);
+}
+
+.ve-sec-node__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.ve-sec-node__label {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+}
+
+.ve-sec-node__controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.ve-sec-node__body {
+    padding: 0.6rem;
+}
+
+.ve-sec-fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 0.75rem;
+}
+
+.ve-sec-fieldset__legend {
+    grid-column: 1 / -1;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0;
+    margin-bottom: 0.1rem;
+}
+
+.ve-sec-fieldset__help {
+    grid-column: 1 / -1;
+    margin: 0 0 0.25rem;
+    opacity: 0.7;
+    font-size: 0.78rem;
+}
+
+.ve-sec-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.ve-sec-field__label {
+    font-size: 0.78rem;
+    opacity: 0.85;
+}
+
+.ve-sec-field__help {
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+.ve-sec-input {
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    font: inherit;
+}
+
+.ve-sec-input[aria-invalid="true"] {
+    border-color: #dc2626;
+    outline: 1px solid #dc2626;
+}
+
+.ve-sec-checkbox {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.ve-sec-properties {
+    margin-bottom: 0.5rem;
+}
+
+.ve-sec-spacing {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.ve-sec-children {
+    border-top: 1px dashed rgba(0, 0, 0, 0.15);
+    padding-top: 0.5rem;
+}
+
+.ve-sec-add-menu {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.4rem;
+}
+
+.ve-sec-add-menu__limit {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    align-self: center;
+}
+
+.ve-sec-btn {
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background: #fff;
+    cursor: pointer;
+}
+
+.ve-sec-btn:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.ve-sec-btn--icon {
+    padding: 0.2rem 0.45rem;
+}
+
+.ve-sec-btn--danger {
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #dc2626;
+}
+
+.ve-sec-btn--danger:hover {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+.ve-sec-richtext-wrap {
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ve-sec-richtext__toolbar {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.ve-sec-richtext {
+    min-height: 4rem;
+    padding: 0.5rem;
+}
+
+.ve-sec-richtext:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+}

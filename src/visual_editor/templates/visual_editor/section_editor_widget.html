@@ -1,0 +1,38 @@
+{% comment %}
+SectionEditorWidget's rendered HTML: a hidden textarea - the real, Django-visible
+form value - plus a container `section_editor.js` fills with a structured form.
+
+The <script> below runs via the generic telepath Widget.render()'s
+runInlineScripts() (see sections.SectionEditorWidget's docstring), in both the
+visual editor's sidebar and Wagtail's classic page editor. `document.currentScript`
+finds the script's own position in the DOM, which is how it locates its own
+textarea without needing a real unique id - at telepath-pack time `id` is still the
+literal "__ID__" placeholder, substituted only once the JS widget class replaces it.
+
+The `setTimeout(..., 0)` is not a style choice - it is required. `Widget.render()`
+runs inline scripts (this one) *before* it calls `boundWidget.setState(initialState)`,
+which is what actually assigns the real JSON to the textarea's `.value`. Reading the
+textarea synchronously here would see it empty every time and silently throw away
+whatever the block already held. Deferring to the next tick runs after `setState`,
+by which point `render()` has returned and the value is really there (verified
+against the actual client/src `Widget.render()`/`runInlineScripts` source, not just
+reasoned about).
+
+`{{ value }}` is the JSONField's already-pretty-printed JSON *string* (or "" - see
+PrettyJSONField.prepare_value), not the parsed tree, and is escaped the same way any
+other textarea's content is: Django's ordinary auto-escaping of a template variable,
+decoded back to the exact original text by the browser's own textarea parsing. It
+needs no special handling even when it embeds rich text HTML as JSON string content.
+{% endcomment %}
+<div class="ve-section-editor" data-ve-section-editor>
+    <textarea name="{{ name }}" id="{{ id }}" class="ve-section-editor__source" hidden>{{ value }}</textarea>
+    <div class="ve-section-editor__ui" data-ve-section-editor-ui></div>
+    <script>
+        (function () {
+            var root = document.currentScript.closest('[data-ve-section-editor]');
+            setTimeout(function () {
+                if (window.VisualEditorSections) window.VisualEditorSections.init(root);
+            }, 0);
+        })();
+    </script>
+</div>

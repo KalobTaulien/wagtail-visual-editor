@@ -1,0 +1,53 @@
+/*
+ * Mobile overrides for visual_editor.sections.CustomSectionBlock.
+ *
+ * Include this on the host project's FRONT END (not just the admin). The base
+ * styles of a custom section are inline and work without this file; what's here is
+ * only the part an inline style can't express - a media query.
+ *
+ * How it fits together (see sections.py for the full picture):
+ *
+ *   A node with `{"display": "grid", "mobile": {"display": "block"}}` renders as
+ *
+ *     <section class="ve-section ve-section--m-display"
+ *              style="display: grid; --ve-sec-display-m: block;">
+ *
+ *   The base value is a plain inline declaration. The mobile value rides along as a
+ *   custom property, and the `ve-section--m-display` class opts that one property
+ *   into the rule below.
+ *
+ * `!important` is required, not stylistic: an inline `style` beats any stylesheet
+ * rule regardless of specificity, so without it the base value would also win
+ * below the breakpoint. We never emit `!important` inline, so these always apply.
+ *
+ * Each selector here must stay in step with a row of `STYLE_PROPERTIES` in
+ * sections.py - the class is `ve-section--m-<suffix>` and the variable is
+ * `--ve-sec-<suffix>-m`. Adding a property there without adding its rule here
+ * means its mobile override validates and stores but silently does nothing.
+ *
+ * 59.9375rem is the complement of the 60rem (960px) breakpoint that
+ * spacing.SpacingBlock uses for "desktop", so the two systems agree on where
+ * mobile ends. Unlike SpacingBlock (mobile-first), these are overrides applied
+ * *below* the breakpoint.
+ */
+@media (max-width: 59.9375rem) {
+    .ve-section--m-display { display: var(--ve-sec-display-m) !important; }
+    .ve-section--m-container {
+        max-width: var(--ve-sec-container-m) !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+    .ve-section--m-gap { gap: var(--ve-sec-gap-m) !important; }
+    .ve-section--m-columns { grid-template-columns: var(--ve-sec-columns-m) !important; }
+    .ve-section--m-direction { flex-direction: var(--ve-sec-direction-m) !important; }
+    .ve-section--m-wrap { flex-wrap: var(--ve-sec-wrap-m) !important; }
+    .ve-section--m-align { align-items: var(--ve-sec-align-m) !important; }
+    .ve-section--m-justify { justify-content: var(--ve-sec-justify-m) !important; }
+    .ve-section--m-text-align { text-align: var(--ve-sec-text-align-m) !important; }
+    .ve-section--m-mt { margin-top: var(--ve-sec-mt-m) !important; }
+    .ve-section--m-mb { margin-bottom: var(--ve-sec-mb-m) !important; }
+    .ve-section--m-pt { padding-top: var(--ve-sec-pt-m) !important; }
+    .ve-section--m-pr { padding-right: var(--ve-sec-pr-m) !important; }
+    .ve-section--m-pb { padding-bottom: var(--ve-sec-pb-m) !important; }
+    .ve-section--m-pl { padding-left: var(--ve-sec-pl-m) !important; }
+}

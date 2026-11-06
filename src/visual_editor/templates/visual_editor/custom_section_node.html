@@ -1,0 +1,28 @@
+{% comment %}
+One node of a CustomSectionBlock tree, rendered recursively.
+
+`node` is render-shape (see `sections._render_node`): `classes` and `style` are
+finished attribute strings built from whitelisted values only, and `tag` is one of
+h1-h6, which is why interpolating it as an element name is safe here. `node.text`
+is plain copy and is escaped by autoescaping; `node.html` is a `RichText`, whose
+`__html__` runs Wagtail's `expand_db_html` - the only route by which author markup
+reaches the page.
+
+`only` is used on the recursive include so a child can't inherit a stale `node`
+from an outer scope.
+
+`data-ve-node` is omitted rather than emitted empty when a node has no id (data
+written straight to the database bypasses `clean`, which is what assigns them).
+Ids are never generated at render time on purpose: the editor diffs a block's HTML
+between renders to decide what changed, so an attribute that varied per render
+would make every section look edited every time.
+{% endcomment %}
+{% if node.type == "section" %}
+    <section class="{{ node.classes }}"{% if node.style %} style="{{ node.style }}"{% endif %}{% if node.id %} data-ve-node="{{ node.id }}"{% endif %}>
+        {% for child in node.children %}{% include "visual_editor/custom_section_node.html" with node=child only %}{% endfor %}
+    </section>
+{% elif node.type == "heading" %}
+    <{{ node.tag }} class="{{ node.classes }}"{% if node.style %} style="{{ node.style }}"{% endif %}{% if node.id %} data-ve-node="{{ node.id }}"{% endif %}>{{ node.text }}</{{ node.tag }}>
+{% elif node.type == "rich_text" %}
+    <div class="{{ node.classes }}"{% if node.style %} style="{{ node.style }}"{% endif %}{% if node.id %} data-ve-node="{{ node.id }}"{% endif %}>{{ node.html }}</div>
+{% endif %}

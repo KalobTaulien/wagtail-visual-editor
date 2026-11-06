@@ -83,27 +83,55 @@ class SpacingLengthBlock(CharBlock):
             raise ValidationError(str(e)) from e
 
 
-class SpacingValue(StructValue):
-    def _lengths(self):
-        """Each set field's normalised length; invalid values (e.g. unsaved previews) are left out."""
-        for name in SPACING_UTILITIES:
-            block = self.block.child_blocks[name]
-            try:
-                length = parse_length(self.get(name), block.allow_negative)
-            except ValueError:
-                continue
-            if length:
-                yield name, length
+def _allow_negative(field_name: str) -> bool:
+    """Margins can pull a block closer (negative); paddings can't push content outside it."""
+    return "margin" in field_name
 
+
+def spacing_lengths(data):
+    """
+    Each of `data`'s eight `SPACING_UTILITIES` fields, normalised and paired with the
+    utility that applies it. `data` is any `{field name: raw value}` mapping - a
+    `SpacingValue`'s `.get(name)` and a plain `dict.get(name)` both work - so this one
+    function is the single source of truth for both `SpacingValue` below and anything
+    else (`sections.CustomSectionBlock`) that wants this exact spacing vocabulary
+    without going through a `SpacingBlock` StructBlock value. Invalid values (e.g.
+    unsaved previews) are left out rather than raised, and so is anything not
+    dict-like - callers that render untrusted/stale data (`sections._render_node`)
+    rely on this never raising, whatever shape `data` turns out to be.
+    """
+    get = getattr(data, "get", None)
+    if not callable(get):
+        return
+    for name, (css_class, variable) in SPACING_UTILITIES.items():
+        try:
+            length = parse_length(get(name), _allow_negative(name))
+        except ValueError:
+            continue
+        if length:
+            yield css_class, variable, length
+
+
+def spacing_attrs(data):
+    """`(classes, style)` for a plain `{field name: raw value}` mapping - see `spacing_lengths`."""
+    lengths = list(spacing_lengths(data))
+    classes = " ".join(css_class for css_class, _variable, _length in lengths)
+    style = "".join(f"{variable}: {length}; " for _css_class, variable, length in lengths)
+    return classes, style
+
+
+class SpacingValue(StructValue):
     @property
     def classes(self) -> str:
         """The utility classes for the sides that are set; empty when everything is left to the template."""
-        return " ".join(SPACING_UTILITIES[name][0] for name, _length in self._lengths())
+        classes, _style = spacing_attrs(self)
+        return classes
 
     @property
     def style(self) -> str:
         """Inline CSS setting the variables those classes read, e.g. `--space-pt: 24px; `."""
-        return "".join(f"{SPACING_UTILITIES[name][1]}: {length}; " for name, length in self._lengths())
+        _classes, style = spacing_attrs(self)
+        return style
 
 
 def _margin(label):

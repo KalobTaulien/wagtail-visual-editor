@@ -1,0 +1,7 @@
+{% comment %}
+Entry point for CustomSectionBlock. `node` is the render-shape tree built by
+`sections._render_node`, or None when the block has no usable value (in which case
+the block renders nothing and `instrument.MarkedStreamChild` substitutes its
+"nothing to show yet" placeholder on the editor's canvas).
+{% endcomment %}
+{% if node %}{% include "visual_editor/custom_section_node.html" with node=node only %}{% endif %}
