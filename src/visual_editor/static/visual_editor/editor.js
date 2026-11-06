@@ -803,6 +803,7 @@
         tagBlocks(doc);
         tagText(doc, registry);
         tagSnippets(doc);
+        tagImages(doc, registry);
         stripMarkers(doc);
         prepareEditable(doc.body);
         injectCanvasStyles(doc);
@@ -973,6 +974,8 @@
         [data-ve-choice]::after { content: ' ▾'; opacity: 0.5; font-size: 0.8em; }
         [data-ve-choice]:has(select)::after { content: none; }
         select[data-ve-choice-input] { font: inherit; color: inherit; }
+        img[data-ve-image] { cursor: pointer; }
+        img[data-ve-image]:hover { outline: 2px dashed rgba(37, 99, 235, 0.6) !important; outline-offset: 2px; }
         span.ve-text { display: inline; }
         [data-ve-rich] { cursor: text; border-radius: 2px; }
         [data-ve-rich]:hover { outline: 1px dashed #f59e0b !important; outline-offset: 4px; }
@@ -1060,6 +1063,31 @@
         });
     }
 
+    /**
+     * Mark each image field's `<img>` (`data-ve-image`) so clicking it can offer to replace it.
+     * An image chooser's rendered markup (a `<img>` from whatever rendition the template
+     * picked) carries no trace of which field chose it, so entries are paired with their
+     * block's `<img>` elements positionally: the registry walks a block's fields in the same
+     * order the template usually renders them in, so the Nth image entry is the Nth `<img>`.
+     */
+    function tagImages(doc, registry) {
+        const byBlock = new Map();
+        registry.forEach((entry) => {
+            if (entry.kind !== 'image' || entry.path[0] !== 'streams') return;
+            const key = `${entry.path[1]}:${entry.path[2].slice(1)}`;
+            if (!byBlock.has(key)) byBlock.set(key, []);
+            byBlock.get(key).push(entry);
+        });
+        byBlock.forEach((entries, key) => {
+            const images = $$(`[data-ve-block="${CSS.escape(key)}"]`, doc).flatMap((node) =>
+                node.matches('img') ? [node] : $$('img', node),
+            );
+            entries.forEach((entry, index) => {
+                if (images[index]) images[index].setAttribute('data-ve-image', JSON.stringify(entry.path));
+            });
+        });
+    }
+
     function targetForPath(path) {
         if (path[0] === 'snippets') return { kind: 'snippet', key: path[1], field: path[2] };
         if (path[0] === 'streams') return { kind: 'block', stream: path[1], id: path[2].slice(1) };
@@ -1086,6 +1114,20 @@
             else if (target.kind === 'snippet') selectSnippet(target.key);
             else if (activeTab !== 'page' || selection) showPageField(target.name);
             return;
+        }
+
+        // Images aren't typed into; clicking one opens Wagtail's own image chooser.
+        const imageNode = event.target.closest('img[data-ve-image]');
+        if (imageNode) {
+            const entry = textEntries.get(imageNode.dataset.veImage);
+            if (entry) {
+                const target = targetForPath(entry.path);
+                if (target.kind === 'block') selectBlock(target.stream, target.id);
+                else if (target.kind === 'snippet') selectSnippet(target.key);
+                else showPageField(target.name);
+                openImageChooser(imageNode, entry);
+                return;
+            }
         }
 
         const textNode = event.target.closest('[data-ve-text]');
@@ -1174,6 +1216,36 @@
         setAtPath(entry.path, value);
         if (entry.path[0] === 'streams') clearBlockError(entry.path[1], entry.path[2].slice(1));
         commit({ coalesce: `choice:${pathKey}` });
+        if (
+            activeTab === 'block' &&
+            selection &&
+            entry.path[0] === 'streams' &&
+            entry.path[1] === selection.stream &&
+            entry.path[2] === `#${selection.id}`
+        ) {
+            refreshInspector();
+        }
+    }
+
+    /** Wagtail's own image chooser, opened directly from the canvas to replace an image in place. */
+    function openImageChooser(node, entry) {
+        if (!window.ModalWorkflow || !window.IMAGE_CHOOSER_MODAL_ONLOAD_HANDLERS) return;
+        window.ModalWorkflow({
+            url: config.urls.imageChooser,
+            onload: window.IMAGE_CHOOSER_MODAL_ONLOAD_HANDLERS,
+            responses: {
+                chosen: (result) => applyImageChoice(node, entry, result),
+            },
+        });
+    }
+
+    /** Write the chooser's picked image into state; the next render shows it in place. */
+    function applyImageChoice(node, entry, result) {
+        entry.value = result.id;
+        node.style.opacity = '0.5';
+        setAtPath(entry.path, result.id);
+        if (entry.path[0] === 'streams') clearBlockError(entry.path[1], entry.path[2].slice(1));
+        commit({ coalesce: `image:${JSON.stringify(entry.path)}` });
         if (
             activeTab === 'block' &&
             selection &&

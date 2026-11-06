@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 from wagtail import blocks
 from wagtail.blocks.list_block import ListValue
 from wagtail.blocks.stream_block import StreamValue
+from wagtail.images.blocks import ImageChooserBlock
 from wagtail.rich_text import RichText
 
 from visual_editor.rich_text import MarkedRichText, toolbar_for
@@ -110,6 +111,20 @@ class Registry:
         )
         return MarkedRichText(value.source, index)
 
+    def mark_image(self, image, path, readonly=False):
+        """
+        Images aren't text either, and unlike rich text their *rendered* markup (an `<img>`
+        from a template-chosen rendition) carries no trace of the chosen image at all - so
+        there's nothing to bracket or embed a marker in. Record the field instead; the canvas
+        pairs each entry with its block's `<img>` elements, in the order both appear.
+        """
+        if image is None:
+            return
+        entry = {"path": path, "value": image.pk, "kind": "image"}
+        if readonly:
+            entry["readonly"] = True
+        self.entries.append(entry)
+
 
 # FieldBlocks whose value is a bare number: edited in place like text, but
 # the canvas restricts what can be typed to digits, "." and "-".
@@ -169,6 +184,10 @@ def mark_block_value(block, value, path, registry):
 
     if isinstance(block, NUMERIC_BLOCKS):
         return registry.mark(str(value), path, numeric=True)
+
+    if isinstance(block, ImageChooserBlock):
+        registry.mark_image(value, path)
+        return value
 
     # Not MultipleChoiceBlock: its value is a list of choices, not a single one,
     # so it isn't offered the inline dropdown (it isn't a ChoiceBlock subclass anyway).

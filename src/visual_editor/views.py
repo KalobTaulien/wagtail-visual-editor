@@ -116,6 +116,7 @@ def editor(request, page_id):
             "pageForm": url("page_form"),
             "pageValue": url("page_value"),
             "save": url("save"),
+            "imageChooser": reverse("wagtailimages_chooser:choose"),
             "classicEdit": reverse("wagtailadmin_pages:edit", args=[page.id]),
             "explore": reverse("wagtailadmin_explore", args=[page.get_parent().id]),
         },
